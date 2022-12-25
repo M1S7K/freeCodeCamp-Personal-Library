@@ -1,3 +1,5 @@
+'use strict';
+const bookModel = require('../database/models').Book;
 /*
 *
 *
@@ -5,9 +7,6 @@
 *       
 *       
 */
-
-'use strict';
-
 module.exports = function (app) {
 
   app.route('/api/books')
@@ -19,6 +18,18 @@ module.exports = function (app) {
     .post(function (req, res){
       let title = req.body.title;
       //response will contain new book object including atleast _id and title
+      if (title === "") {res.end("missing required field title");}
+      // create new Book
+      const newBook = new bookModel({title: title});
+      // safe new book
+      newBook.save((err, data) => {
+        // check error
+        if (err || !data) {
+          res.send("missing required field comment");
+        } else {
+          res.json({ _id: newBook._id, title: newBook.title, });
+        }
+      });
     })
     
     .delete(function(req, res){
@@ -36,7 +47,19 @@ module.exports = function (app) {
     .post(function(req, res){
       let bookid = req.params.id;
       let comment = req.body.comment;
+      console.log("bookid", bookid)
       //json res format same as .get
+      if (bookid == "") {
+        res.send("missing required field comment")
+      }
+      //find bookid and update values
+      bookModel.findByIdAndUpdate(bookid, {$push: { comments: comment }, $inc: {commentcount: 1} }, {new: true}, function(err, data){
+        if (err) {
+          res.send("no book exists")
+        } else {
+          res.json(data)
+        }
+      });
     })
     
     .delete(function(req, res){
