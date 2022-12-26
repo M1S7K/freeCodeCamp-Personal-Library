@@ -47,6 +47,16 @@ module.exports = function (app) {
     
     .delete(function(req, res){
       //if successful response will be 'complete delete successful'
+      bookModel.deleteMany({}, function(err){
+        if (err) {
+          console.log(err)
+          res.send("error occured")
+          return;
+        } else {
+          console.log('complete delete successful')
+          res.send("complete delete successful")
+        }
+      });
     });
 
 
@@ -73,17 +83,22 @@ module.exports = function (app) {
     .post(function(req, res){
       let bookid = req.params.id;
       let comment = req.body.comment;
-      console.log("bookid", bookid)
       //json res format same as .get
-      if (bookid == "") {
-        res.send("missing required field comment")
+      if (!comment) {
+        res.send("missing required field comment");
+        return;
       }
       //find bookid and update values
       bookModel.findByIdAndUpdate(bookid, {$push: { comments: comment }, $inc: {commentcount: 1} }, {new: true}, function(err, data){
         if (err) {
-          res.send("no book exists")
+          console.error(err);
+          res.send('An error occurred');
+          return;
+        } else if (data) {
+          res.json(data);
+          return;
         } else {
-          res.json(data)
+          res.send('no book exists');
         }
       });
     })
@@ -91,6 +106,18 @@ module.exports = function (app) {
     .delete(function(req, res){
       let bookid = req.params.id;
       //if successful response will be 'delete successful'
+      bookModel.findOneAndDelete(ObjectId(bookid), function(err, book){
+        if (err) {
+          console.log(err)
+          res.send('An error occured')
+          return;
+        } else if (book) {
+          res.send('delete successful')
+          return
+        } else {
+          res.send('no book exists')
+          return
+        }
+      });
     });
-  
 };
